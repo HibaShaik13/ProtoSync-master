@@ -1,0 +1,134 @@
+================================================================================
+          PROTOSYNC: FULL DEPLOYMENT PLAYBOOK & HANDS-ON GUIDE
+================================================================================
+This playbook details every single basic step required to export ProtoSync from 
+the AI Studio build sandbox, upload it to GitHub, and deploy it to Vercel (for the 
+React frontend SPA) and Render (for the Flask Python + MongoDB Backend API server).
+
+--------------------------------------------------------------------------------
+STAGE 1: DOWNLOAD AND EXTRACT THE SOURCE PACK
+--------------------------------------------------------------------------------
+1. Download ZIP:
+   - In the Google AI Studio build editor, open the settings menu (usually the 
+     cogwheel or options menu).
+   - Click "Export as ZIP" or "Download ZIP". Save the file to your computer.
+
+2. Extract on your machine:
+   - Create a folder on your computer named "ProtoSync".
+   - Extract the downloaded ZIP file right inside this "ProtoSync" directory.
+   - You will see the codebase structure as follows:
+     * Root Workspace Directory: Your Vite-React code assets (`src`, `package.json`, `vite.config.ts`, `tsconfig.json`) are located directly in the root folder.
+     * Backend Directory (`/backend`): Contains your Flask Python API server structure (`app.py`, `db.py`, `routes/`, `utils/`, `requirements.txt`).
+
+--------------------------------------------------------------------------------
+STAGE 2: INITIALIZE GIT AND UPLOAD TO GITHUB
+--------------------------------------------------------------------------------
+1. Prerequisites:
+   - Make sure Git is installed on your machine (https://git-scm.com).
+   - Ensure you are signed into your GitHub account (https://github.com).
+
+2. Open Terminal / Command Prompt:
+   - Navigate to your extracted local folder where the code resides:
+     cd Path/To/Your/Extracted/ProtoSync
+
+3. Initialize local repository:
+   - Initialize git tracking:
+     git init
+   - Save temporary progress changes locally:
+     git add .
+     git commit -m "First production-ready launch of ProtoSync"
+
+4. Create Repository on GitHub:
+   - Go to https://github.com.
+   - Click the "+" button in the top right and select "New repository".
+   - Repository Name: "protosync-app"
+   - Visibility: Keep it "Private" (to secure secrets) or "Public" (for easy deployment).
+   - Leave "Add a README", "Add .gitignore", and "Choose a license" UNCHECKED!
+   - Click "Create repository".
+
+5. Push assets to GitHub:
+   - Copy the commands shown under "...or push an existing repository from the command line":
+     git branch -M main
+     git remote add origin https://github.com/YOUR_GITHUB_USERNAME/protosync-app.git
+     git push -u origin main
+   - Refresh your GitHub window. You will now see your codebase completely uploaded!
+
+--------------------------------------------------------------------------------
+STAGE 3: SET UP MONGODB ATLAS (DATABASE FOR BACKEND)
+--------------------------------------------------------------------------------
+Your Python Flask backend requires a real MongoDB cluster to keep transactions persistent.
+1. Sign Up/In: Go to https://www.mongodb.com/cloud/atlas and create a free account.
+2. Build Database: Select "Deploy a cloud database" -> Choose the "M0 Free Shared Tier" cluster.
+3. Choose Region: Set it near your location and click "Create".
+4. Database Access Security Users:
+   - Create a database user (e.g., Username: "admin", Password: "securepassword77").
+   - Click "Create User". (REMEMBER this password!)
+5. Network Access IP Whitelist:
+   - Add security rules allowing hosting nodes to connect: Choose "Allow Access from Anywhere" (IP: 0.0.0.0/0).
+   - Click "Add IP Address".
+6. Retrieve Connection String URI:
+   - Go to your database cluster dashboard, then click "Connect".
+   - Select "Drivers" (under connection options).
+   - Copy the provided Connection URI string. It looks like:
+     mongodb+srv://admin:<db_password>@cluster0.abcde.mongodb.net/?retryWrites=true&w=majority
+   - Replace "<db_password>" with your actual created password ("securepassword77").
+   - Replace the database name near the end with "protosync" (e.g., /protosync?retryWrites=...).
+
+--------------------------------------------------------------------------------
+STAGE 4: DEPLOY FLASK CORE BACKEND TO RENDER (Https Web Service API)
+--------------------------------------------------------------------------------
+Render is a cloud provider that will host your Flask Python backend online for free.
+1. Sign Up: Go to https://render.com and sign up using your GitHub account credentials.
+2. Initiate Web Service:
+   - In Render, click "New +" and choose "Web Service".
+   - Select "Build and deploy from a Git repository" -> Connect your GitHub account.
+   - Select and connect your "protosync-app" repository from the menu list.
+3. Configure settings:
+   - Name: protosync-backend
+   - Region: Select a region closest to you
+   - Branch: main
+   - Root Directory: backend  (Type "backend" to tell Render to execute commands inside the back-end folder!)
+   - Runtime: Python
+   - Build Command: pip install -r requirements.txt
+   - Start Command: gunicorn app:app --bind 0.0.0.0:$PORT
+4. Define Environment Settings Variables:
+   - Click "Advanced" inside the configurations form and define these keys & values:
+     * MONGO_URI = <YOUR_MONGODB_ATLAS_CONNECTION_STRING_URI>  (The one from Stage 3)
+     * JWT_SECRET = protosync_jwt_super_secret_998273
+     * PORT = 5000
+     * SMTP_HOST = smtp.gmail.com  (For real OTP email delivery)
+     * SMTP_PORT = 587
+     * SMTP_USER = your_gmail_address@gmail.com
+     * SMTP_PASS = your_google_app_password
+     * SMTP_FROM_EMAIL = your_gmail_address@gmail.com
+5. Deploy:
+   - Click "Create Web Service".
+   - Wait 2-3 minutes. Watch the progress logs. You will see "Your service is live!".
+   - Copy your live backend root API address URL (e.g., https://protosync-backend.onrender.com).
+
+--------------------------------------------------------------------------------
+STAGE 5: DEPLOY FRONTEND REACT SPA TO VERCEL
+--------------------------------------------------------------------------------
+Vercel is the ideal cloud host to serve your fast, interactive React web user interfaces.
+1. Sign Up: Go to https://vercel.com and sign up with your linked GitHub account.
+2. New Project setup:
+   - Click "Add New" and select "Project".
+   - Locate your "protosync-app" repository and click "Import".
+3. Configure Framework settings:
+   - Framework Preset: Vite
+   - Root Directory: Leave blank / root directory (`.`) as your React files reside in the main repository root.
+   - Build Command: npm run build
+   - Output Directory: dist
+   - Install Command: npm install
+4. Environment variables integration:
+   - Add a key for the React build to communicate directly with your Render Flask Service:
+     * Key: VITE_BACKEND_URL
+     * Value: <COPY_YOUR_RENDER_BACKEND_LIVE_URL> (e.g., https://protosync-backend.onrender.com)
+5. Deploy:
+   - Click "Deploy".
+   - Within 1-2 minutes, you will receive confirmation of deployment! Your React applet interface is now live!
+   - Share this live link (or test on your mobile device) to showcase the multi-user sign-up, JWT login, and SMTP Email OTP workflows to your teammates, instructors, or evaluators.
+
+--------------------------------------------------------------------------------
+                  🎉 CONGRATULATIONS! PROTOSYNC IS ONLINE!
+================================================================================
